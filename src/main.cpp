@@ -1,7 +1,3 @@
-/*
- * Copyright 2022 Hans Busch
- * SPDX-License-Identifier: GPL-2.0-or-later
- */
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <sys/stat.h>
@@ -153,6 +149,19 @@ int main(int argc, char *const *argv)
         return -1;
     }
 
+#ifndef _WIN32
+    auto pid = fork();
+    if (pid < 0) {
+         fprintf(stderr, "fork failed (%d)", pid);
+         exit(1);
+    }
+    if (pid > 0) {
+        exit(0); // Parent is terminated, child runs on
+    }
+    close(0);
+    close(1);
+    close(2);
+#endif
     auto server = doc.first_element_by_path("config/server");
     auto log = server.child("log");
     logLevel = log.child("level").text().as_int();
