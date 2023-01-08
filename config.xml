@@ -1,0 +1,50 @@
+<config>
+	<server>
+		<html>www</html>
+		<http>
+			<port>8080</port>
+		</http>
+		<log>
+			<path>/tmp/viserve.log</path>
+			<level>2</level>
+		</log>
+		<usb>/dev/ttyUSB0</usb>
+	</server>
+	<api>
+		<settings>
+			<boiler>
+				<model type='hex' addr='00f8' len='2' refresh='3600'/>
+				<party type='bool' addr='3330' operation='rw'/>
+				<heating-curve>
+					<base type='decimal' operation='rw' addr='xx' />
+					<slope type='decimal' operation='rw' addr='xx' />
+				</heating-curve>
+			</boiler>
+			<circuit>
+				<temperature type='decimal' addr='xx'/>
+				<pump type='bool' addr='0111' refresh='2'/>
+			</circuit>
+			<dhw>	<!-- -Domestic Hot Water -->
+				<temperature type='decimal' addr='xx'/>
+				<pump type='bool' addr='0212' refresh='2'/>
+				<request type='bool' addr='3330' operation='pulse' duration='60'/>
+			</dhw>
+		</settings>
+		<status>
+			<temperature>
+				<exhaust type='decimal' addr='0808'/>
+				<boiler type='decimal' addr='0802'/>
+				<burner type='bool' addr='55d3'/>
+				<outdoor type='decimal' addr='0800'/>
+				<flow type='decimal' addr='3900'/>
+				<reverse type='decimal' addr='080a'/>
+				<dhw type='decimal' addr='0804'/>
+			</temperature>
+			<pump>
+				<flow type='bool' addr='7665' refresh='2'/>
+				<water type='bool' addr='6513' refresh='2'/>
+				<circulation type='bool' addr='6515' refresh='2'/>
+			</pump>
+		</status>
+	</api>
+</config>
