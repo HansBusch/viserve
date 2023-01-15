@@ -4,6 +4,9 @@
 		<http>
 			<port>8080</port>
 		</http>
+		<metrics>
+			<root>status</root>
+		</metrics>
 		<log>
 			<path>/tmp/viserve.log</path>
 			<level>2</level>

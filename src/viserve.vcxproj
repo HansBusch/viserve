@@ -130,6 +130,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="metrics.cpp" />
     <ClCompile Include="pugixml\pugixml.cpp" />
     <ClCompile Include="restapi.cpp" />
     <ClCompile Include="vito_io.cpp" />

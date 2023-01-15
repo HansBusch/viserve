@@ -17,9 +17,12 @@
 #include "restapi.h"
 #include "pugixml/pugixml.hpp"
 
+extern MHD_Result onMetrics(struct MHD_Connection* connection, const char* url, const char* root, restIO readCb);
+
 static FILE *fdLog;
 static int logLevel;
 static const char* wwwRoot;
+static const char *metricsRoot;
 
 void printTimestamp(FILE *fd, const char *prefix) {
     struct timeb time;
@@ -103,7 +106,9 @@ static MHD_Result onHttp(void *cls,
     if (!strncmp(url, "/api", 4)) {
         return onRestApi(connection, url, !get, upload_data, upload_data_size);
     }
-
+    if (get && !strncmp(url, "/metrics", 8)) {
+        return onMetrics(connection, url, metricsRoot, vito_read);
+    }
     if (!get) return MHD_NO;
 
 
@@ -177,6 +182,7 @@ int main(int argc, char *const *argv)
     }
 
     wwwRoot = server.first_element_by_path("html").text().as_string();
+    metricsRoot = server.first_element_by_path("metrics/root").text().as_string();
 
     int port = server.first_element_by_path("http/port").text().as_int();
     int defaultRefresh = server.first_element_by_path("default/refresh").text().as_int(10);

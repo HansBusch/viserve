@@ -70,7 +70,7 @@ static bool getJson(std::stringstream &buf, CacheEntry *ce, char *jpath, char *j
 /**
  * Recursive lookup of a cache entry from the path
  */
-static CacheEntry *lookup(const char *path, CacheEntry *ce)
+CacheEntry *lookup(const char *path, CacheEntry *ce)
 {
     const char *end = strchr(path, '/');
     if (end == 0) end = path + strlen(path);

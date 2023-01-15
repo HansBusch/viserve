@@ -34,3 +34,4 @@ typedef int (*restIO)(int addr, void* buffer, size_t size);
 MHD_Result onRestApi(struct MHD_Connection *connection, const char *url, bool write, const char *data, size_t *dataSize);
 void loadRestApi(CacheEntry* ce, const pugi::xml_node& node, int defaultRefresh, restIO read, restIO write);
 void onRestTimer();
+CacheEntry* lookup(const char* path, CacheEntry* ce);
