@@ -1,7 +1,11 @@
 # viserve
 A freely configurable REST server supporting the Viessmann Optolink interface. 
 
-In order to not overload the slow optical interface the service caches all exposed parameters. 
+Supported services:
+ * Web server including animated graphics for visualizing current heating system status information.
+ * Metrics scrape API according to OpenMetrics specification supporting Prometheus.
+
+In order to not overload the slow optical interface the service caches all exposed parameters. Cache expiration can be globally and indivdually configured.
 
 The software provides a sample configuration to display information of a 20CB type. 
 Note that addresses seem to vary between installations. Hence use write operations only after validation of the read interface.
@@ -24,7 +28,11 @@ For Windows copy binaries and include file into directory src
 The startup file config.xml consists of two main sections 'service' and 'api'.
 
 ## Service
-The service section allows to configure the service endpoint, the location of files to be served as well the logging configuration.
+The service section allows to configure the service endpoint, the location of files to be served and logging configuration.
+
+Service endpoints:
+* http - Configuration of port for REST API for getting and setting values. 
+* metrics - REST API root to be exposed as metrics for OpenMetrics compatible scrape services. Note that the values are always served via the well defined path /metrics.
 
 Logging levels available:
  > 1 Log read and write commands with address and hex payload
@@ -47,7 +55,7 @@ The following example exposes the path /api/status with subnodes. Boiler is a de
   </status>
 </api>
 ```
-A client may choose request a single parameter ```/api/status/temperature/boiler``` or request a set of information via ```/api/status```.
+A client may choose to request a single parameter ```/api/status/temperature/boiler``` or request a set of information via ```/api/status```.
 
 The following attributes allow to map interface nodes to heating system parameters:
 
@@ -76,6 +84,11 @@ Thanks to the indepth engineering efforts of the following projects:
 * [vcontrold](https://github.com/openv/vcontrold)
 * [Interfacing Vitovalor 300-P with a Raspberry Pi ](https://projects.webvoss.de/2017/11/05/interfacing-vitovalor-300-p-with-a-raspberry-pi/)
 * [vitalk](https://github.com/klauweg/vitalk)
+
+For  more information on visualizing see
+* [Open Metrics](https://openmetrics.io/)
+* [Prometheus Metrics](https://prometheus.io/)
+* [Grafana](https://grafana.com/)
 
 # Todo
 
