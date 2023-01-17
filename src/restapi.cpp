@@ -43,7 +43,7 @@ static bool getJson(std::stringstream &buf, CacheEntry *ce, char *jpath, char *j
             buf << (ce->value / 100.0);
             break;
         case Deci:
-            buf << (ce->value / 10.0);
+            buf << (ce->val16 / 10.0);      // needs to support negative temperatures
             break;
         case Milli:
             buf << (ce->value / 1000.0);

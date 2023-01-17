@@ -21,7 +21,8 @@ struct CacheEntry {
     enum Type type;         // Fixed point, boolean and hex data conversion rool to be applied on read/write
     enum Operation op;      // Default is readonly. 
     union { 
-        int value;          // Value in little endian matching the API transmission order
+        int16_t val16;          // Value in little endian matching the API transmission order
+        int32_t value;          // Value in little endian matching the API transmission order
         uint8_t buffer[16]; // Buffer size should be sufficient to cache data
     };
     time_t timeout;         // time until the current value is valid

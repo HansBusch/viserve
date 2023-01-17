@@ -37,7 +37,7 @@ static bool getMetrics(std::stringstream& buf, CacheEntry* ce, char* jpath, char
             buf << (ce->value / 100.0);
             break;
         case Deci:
-            buf << (ce->value / 10.0);
+            buf << (ce->val16 / 10.0);
             break;
         case Milli:
             buf << (ce->value / 1000.0);
