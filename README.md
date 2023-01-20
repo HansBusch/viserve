@@ -1,6 +1,8 @@
 # viserve
 A freely configurable REST server supporting the Viessmann Optolink interface. 
 
+<img src="https://hansbusch.github.io/viserve/www/system.svg" alt="drawing" width="200"/>
+
 Supported services:
  * Web server including animated graphics for visualizing current heating system status information.
  * Metrics scrape API according to OpenMetrics specification supporting Prometheus.
@@ -9,6 +11,9 @@ In order to not overload the slow optical interface the service caches all expos
 
 The software provides a sample configuration to display information of a 20CB type. 
 Note that addresses seem to vary between installations. Hence use write operations only after validation of the read interface.
+
+# Web UI
+A minimalistic  graphical UI displays current system values including temperatures and pump operation. The only active component is the circulation pump that may be triggered for a programmed time interval via mouse click.
 
 # Dependencies
 * libmicrohttpd - The project uses libmicrohttpd for serving files and the REST API.
