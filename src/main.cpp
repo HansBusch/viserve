@@ -149,23 +149,6 @@ int main(int argc, char *const *argv)
     struct MHD_Daemon *daemon;
     pugi::xml_document doc;
 
-#ifndef _WIN32
-    auto pid = fork();
-    if (pid < 0) {
-        fprintf(stderr, "fork failed (%d)", pid);
-        exit(1);
-    }
-    if (pid > 0) {
-        exit(0); // Parent is terminated, child runs on
-    }
-    close(0);
-    close(1);
-    close(2);
-
-    umask(0);
-    setsid();
-#endif
-
     if (!doc.load_file("config.xml")) {
         fprintf(stderr, "Error: failed to load configuration\n");
         return -1;
