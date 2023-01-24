@@ -24,29 +24,17 @@ static bool getMetrics(std::stringstream& buf, CacheEntry* ce, char* jpath, char
         return true;
     }
     else if (ce->op != Writeonly) {
-        if (ce->timeout < now) {
+        if (ce->target == Vito && ce->timeout < now) {
             readCb(ce->addr, ce->buffer, ce->len);
             ce->timeout = now + ce->refresh;
         }
         buf << "# TYPE " << jpath << " gauge\n" << jpath << ' ';
         switch (ce->type) {
-        case Int:
-            buf << ce->value;
-            break;
-        case Centi:
-            buf << (ce->value / 100.0);
-            break;
-        case Deci:
-            buf << (ce->val16 / 10.0);
-            break;
-        case Milli:
-            buf << (ce->value / 1000.0);
-            break;
-        case Half:
-            buf << (ce->value / 2.0);
-            break;
         case Bool:
             buf << (ce->value ? '1' : '0');
+            break;
+        default:
+            buf << (ce->value / (double)ce->scale);
             break;
         }
         buf << '\n';

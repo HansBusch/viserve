@@ -35,7 +35,7 @@ int vito_open(char *device)
    
     fd_serial = open(device, O_RDWR | O_NOCTTY);
     if (fd_serial < 0) {
-        return logText("init", "Error opening device %s\n%s", device, strerror(errno));
+        return logText(0, "init", "Error opening device %s\n%s", device, strerror(errno));
     }
 
     struct termios tcattr = {};
@@ -44,7 +44,7 @@ int vito_open(char *device)
     tcattr.c_cc[VTIME] = 50; // RX timeout
      
     if ( tcsetattr(fd_serial, TCSAFLUSH, &tcattr) < 0 ) {
-        return logText("init", "Error configuring device %s\n%s", device, strerror(errno));
+        return logText(0, "init", "Error configuring device %s\n%s", device, strerror(errno));
     }
    
     // DTR High for voltage supply
@@ -52,11 +52,11 @@ int vito_open(char *device)
     ioctl( fd_serial, TIOCMGET, &modemctl );
     modemctl |= TIOCM_DTR;
     if ( ioctl(fd_serial,TIOCMSET,&modemctl) < 0 ) {
-        return logText("Error activating dtr for %s\n%s", device, strerror(errno));
+        return logText(0, "Error activating dtr for %s\n%s", device, strerror(errno));
     }
     return 0;
 #else
-    return logText("init", "Real device operation not supported on Windows");
+    return logText(0, "init", "Real device operation not supported on Windows");
 #endif
 }
 
@@ -71,7 +71,7 @@ int vito_init( void )
     trys = 10;
     do {
         if (--trys == 0) {
-            return logText("init", "Reset to KW protocol failed");
+            return logText(0, "init", "Reset to KW protocol failed");
         }
 
         tcflush( fd_serial, TCIOFLUSH );
@@ -90,7 +90,7 @@ int vito_init( void )
     read( fd_serial, &rec, 1 );
     logDump(4, "RD", 0, &rec, 1);
     if (rec != 0x06) {
-        return logText("init", "Unexpected resp %02x", rec);
+        return logText(0, "init", "Unexpected resp %02x", rec);
     }
     return 0;
 }
@@ -179,14 +179,14 @@ static int vito_io(int addr, VITO_RW rw, void* vbuffer, size_t len)
 int vito_read(int addr, void* buffer, size_t size)
 {
     int ret = vito_io(addr, VITO_READ, buffer, size);
-    if (ret < 0) logText("rx", "%04x Error %d", addr, ret);
+    if (ret < 0) logText(1, "rx", "%04x Error %d", addr, ret);
     return ret;
 }
 
 int vito_write(int addr, void* buffer, size_t size)
 {
     int ret = vito_io(addr, VITO_WRITE, buffer, size);
-    if (ret < 0) logText("tx", "%04x Error %d", addr, ret);
+    if (ret < 0) logText(1, "tx", "%04x Error %d", addr, ret);
     return ret;
 }
 

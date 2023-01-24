@@ -5,17 +5,22 @@
 #include <sys/timeb.h>
 #include <stdarg.h>
 #include "vito_io.h"
+#include "restapi.h"
 #include <chrono>
 #include <thread>
+#include "pugixml/pugixml.hpp"
+#include "gpio.h"
 
 #ifdef _WIN32 
 #  define timeb _timeb
 #  define ftime _ftime
 #  define S_ISREG(x) (x & _S_IFREG)
+int gpio_init() { return -1; }
+DebounceFilter* gpio_filter(unsigned int index) { return 0; }
+void gpio_poll(time_t& now) {}
+#else
 #endif
 
-#include "restapi.h"
-#include "pugixml/pugixml.hpp"
 
 extern MHD_Result onMetrics(struct MHD_Connection* connection, const char* url, const char* root, restIO readCb);
 
@@ -23,7 +28,6 @@ static FILE *fdLog;
 static int logLevel;
 static const char* wwwRoot;
 static const char *metricsRoot;
-
 void printTimestamp(FILE *fd, const char *prefix) {
     struct timeb time;
     ftime(&time);
@@ -31,7 +35,8 @@ void printTimestamp(FILE *fd, const char *prefix) {
     strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", localtime(&time.time));
     fprintf(fd, "\n%s.%03d %s ", buffer, time.millitm, prefix);
 }
-int logText(const char *prefix, const char *fmt, ...) {
+int logText(int level, const char *prefix, const char *fmt, ...) {
+    if (logLevel < level) return -1;
     printTimestamp(fdLog, prefix);
     va_list args;
     va_start(args, fmt);
@@ -124,29 +129,29 @@ static MHD_Result onHttp(void *cls,
     if (file == NULL) {
         response = MHD_create_response_from_buffer(strlen(EMPTY_PAGE),
             (void *)EMPTY_PAGE,
-            MHD_RESPMEM_PERSISTENT);
+        MHD_RESPMEM_PERSISTENT);
         ret = MHD_queue_response(connection, MHD_HTTP_NOT_FOUND, response);
         MHD_destroy_response(response);
     }
     else
     {
-        response = MHD_create_response_from_callback(buf.st_size, 32 * 1024,     /* 32k PAGE_NOT_FOUND size */
-            &file_reader, file,
-            &file_free);
-        if (response == NULL)
-        {
-            fclose(file);
-            return MHD_NO;
-        }
-        ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
-        MHD_destroy_response(response);
+    response = MHD_create_response_from_callback(buf.st_size, 32 * 1024,     /* 32k PAGE_NOT_FOUND size */
+        &file_reader, file,
+        &file_free);
+    if (response == NULL)
+    {
+        fclose(file);
+        return MHD_NO;
+    }
+    ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
+    MHD_destroy_response(response);
     }
     return ret;
 }
 
-int main(int argc, char *const *argv)
+int main(int argc, char* const* argv)
 {
-    struct MHD_Daemon *daemon;
+    struct MHD_Daemon* daemon;
     pugi::xml_document doc;
 
     if (!doc.load_file("config.xml")) {
@@ -163,6 +168,14 @@ int main(int argc, char *const *argv)
         fprintf(stderr, "Error: failed to open logfile\n");
         fdLog = stderr;
     }
+    auto _gpios = server.child("gpios");
+    for (auto gpio = _gpios.first_child(); gpio; gpio = gpio.next_sibling()) {
+        auto no = gpio.attribute("addr").as_uint();
+        if (auto filter = gpio_filter(no)) {
+            filter->min = gpio.attribute("min").as_uint();
+            filter->ratio = gpio.attribute("ratio").as_uint(1);
+        }
+    }
 
     wwwRoot = server.first_element_by_path("html").text().as_string();
     metricsRoot = server.first_element_by_path("metrics/root").text().as_string();
@@ -173,27 +186,39 @@ int main(int argc, char *const *argv)
     loadRestApi(ApiRoot, doc.first_element_by_path("config/api"), defaultRefresh, vito_read, vito_write);
 
     daemon = MHD_start_daemon(MHD_USE_DEBUG | MHD_USE_INTERNAL_POLLING_THREAD,
-            port, NULL, NULL, &onHttp, NULL, 
-            MHD_OPTION_CONNECTION_TIMEOUT, 256, MHD_OPTION_NOTIFY_COMPLETED, &request_completed_callback, NULL, MHD_OPTION_END);
+        port, NULL, NULL, &onHttp, NULL,
+        MHD_OPTION_CONNECTION_TIMEOUT, 256, MHD_OPTION_NOTIFY_COMPLETED, &request_completed_callback, NULL, MHD_OPTION_END);
 
-    logText("--", "http daemon listen on %d", daemon ? port : -1);
+    logText(0, "--", "http daemon listen on %d", daemon ? port : -1);
 
     auto usbPort = server.first_element_by_path("usb").text().as_string(0);
     if (usbPort) {
         if (vito_open((char*)usbPort)) {
             fprintf(stderr, "Failed to open serial port. Operating in simulation mode.\n");
-            logText("--", "Failed to open serial port. Operating in simulation mode.");
+            logText(0, "--", "Failed to open serial port. Operating in simulation mode.");
         }
         else {
             vito_init();
         }
     }
-
-    while (1) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-        onRestTimer();
+    if (gpioList.size() > 0) {
+        gpio_init();
+        time_t last = 0;
+        while (1) {
+            time_t now = time(0);
+            if (now != last) {      // once a second
+                onRestTimer();
+                last = now;
+            }
+            gpio_poll(now);
+        }
     }
-
+    else {
+        while (1) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            onRestTimer();
+        }
+    }
     MHD_stop_daemon(daemon);
 
     return 0;

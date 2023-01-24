@@ -12,6 +12,9 @@
 			<level>2</level>
 		</log>
 		<usb>/dev/ttyUSB0</usb>
+		<gpios>
+			<gpio addr='17' min='100' ratio='8'/>
+		</gpios>
 	</server>
 	<api>
 		<settings>
@@ -48,6 +51,10 @@
 				<water type='bool' addr='6513' refresh='2'/>
 				<circulation type='bool' addr='6515' refresh='2'/>
 			</pump>
-		</status>
+<!--			<gas>
+				<flow type='cent' gpio='17' frequency='true'/>
+				<counter type='cent' gpio='17'/>
+			</gas>
+-->		</status>
 	</api>
 </config>

@@ -11,6 +11,7 @@
 static time_t now;
 static restIO readCb, writeCb;
 static std::list<CacheEntry*> timerList;
+std::list<CacheEntry*> gpioList;
 
 CacheEntry ApiRoot[2];
 /**
@@ -31,26 +32,11 @@ static bool getJson(std::stringstream &buf, CacheEntry *ce, char *jpath, char *j
 		return notFirst;
     }
     else if (ce->op != Writeonly) {
-        if (ce->timeout < now) {
+        if (ce->target == Vito && ce->timeout < now) {
             readCb(ce->addr, ce->buffer, ce->len);
             ce->timeout = now + ce->refresh;
         }
         switch (ce->type) {
-        case Int:
-            buf << ce->value;
-            break;
-        case Centi:
-            buf << (ce->value / 100.0);
-            break;
-        case Deci:
-            buf << (ce->val16 / 10.0);      // needs to support negative temperatures
-            break;
-        case Milli:
-            buf << (ce->value / 1000.0);
-            break;
-        case Half:
-            buf << (ce->value / 2.0);
-            break;
         case Bool:
             buf << (ce->value ? "true" : "false");
             break;
@@ -60,6 +46,9 @@ static bool getJson(std::stringstream &buf, CacheEntry *ce, char *jpath, char *j
                 snprintf(txt, sizeof(txt), "%02x", ce->buffer[i]);
                 buf << txt;
             }
+            break;
+        default:
+            buf << (ce->value / (double)ce->scale);
             break;
         }
 		return true;
@@ -183,6 +172,7 @@ static void loadApi(CacheEntry* ce, const pugi::xml_node& node, int defaultRefre
         ce->addr = strtoul(node.attribute("addr").as_string(), 0, 16);
         auto type = node.attribute("type").as_string();
         int len = 2;
+        ce->scale = node.attribute("scale").as_int(1);
         switch (type[0]) {
         case 'b':
             ce->type = Bool;
@@ -190,16 +180,20 @@ static void loadApi(CacheEntry* ce, const pugi::xml_node& node, int defaultRefre
             break;
         case 'c':
             ce->type = Centi;
+            ce->scale = 100;
             break;
         case 'd':
             ce->type = Deci;
+            ce->scale = 10;
             break;
         case 'h':
-            ce->type = type[0] == 'a' ? Half : Hex;
+            ce->type = (type[1] == 'a') ? Half : Hex;
+            if (type[1] == 'a') ce->scale = 2;
             len = 1;
             break;
         case 'm':
             ce->type = Milli;
+            ce->scale = 1000;
             break;
         default:
             ce->type = Int;
@@ -227,6 +221,12 @@ static void loadApi(CacheEntry* ce, const pugi::xml_node& node, int defaultRefre
                 break;
             }
             }
+        }
+        int gpio = node.attribute("gpio").as_int(-1);
+        if (gpio >= 0) {
+            ce->addr = gpio;
+            ce->target = node.attribute("frequency") ? GPIO_Frequency : GPIO_Counter;
+            gpioList.push_back(ce);
         }
     }
 }
