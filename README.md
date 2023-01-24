@@ -26,6 +26,7 @@ A Makefile supports building as daemon for Linux. Additionally a Visual Studio p
 Linux prerequisit:
 * apt-get install libmicrohttpd-dev 
 * apt-get install libmicrohttpd12
+* apt-get install libgpiod-dev
 
 For Windows copy binaries and include file into directory src
 
@@ -83,6 +84,17 @@ Pulse needs a further 'duration' attribute to define the duration of the pulse i
 4. refresh [seconds]
 The server default cache refresh rate can be individually adjusted for commands. Thermal parameters are typically changing slowly allowing for longer caching while boolean value may need to be adapted quicker in order to provide feedback.
 
+## GPIO Monitoring
+API entries with attribute gpio='line' are read from the GPIO interface. The mode defaults to counter. Use attribute frequency='true' to monitor the observed frequency instead. 
+Note the caveat that in case no counts arrive the frequency will only gradually decrease due to lack of more exact information.
+
+In order to cope with bouncing due to contact issues as well as double spikes GPIO debouncing can be controlled via the following entries:
+```
+<gpios>
+    <gpio addr='4' min='100' ratio='5'/>
+</gpios>
+```
+The min value defines the minimum duration in milliseconds while the ratio defines the allowed ratio between the biggest and smalles gap.
 # References
 Thanks to the indepth engineering efforts of the following projects:
 
