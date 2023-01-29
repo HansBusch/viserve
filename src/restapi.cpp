@@ -34,6 +34,7 @@ static bool getJson(std::stringstream &buf, CacheEntry *ce, char *jpath, char *j
     else if (ce->op != Writeonly) {
         if (ce->target == Vito && ce->timeout < now) {
             readCb(ce->addr, ce->buffer, ce->len);
+            if (ce->len == 2) ce->value = ce->val16;        // propagate sign
             ce->timeout = now + ce->refresh;
         }
         switch (ce->type) {
